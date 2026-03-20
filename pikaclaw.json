@@ -1,0 +1,11 @@
+{
+    "default_model": "ollama/qwen2.5-coder:3b",
+    "routing": "balanced",
+    "default_agent": "build",
+    "security": {
+        "sandbox_enabled": true,
+        "prompt_guard_enabled": true,
+        "audit_logging": true,
+        "sentinel_enabled": true
+    }
+}
