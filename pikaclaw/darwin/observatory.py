@@ -108,41 +108,58 @@ class PerformanceObservatory:
                 )
 
     async def diagnose(self, days: int = 7) -> list[Weakness]:
-        """Analyze recent metrics and identify weaknesses."""
+        """Analyze recent metrics AND user feedback to identify weaknesses.
+
+        This merges two signals:
+        1. System metrics (latency, success rate, cost) — objective
+        2. User feedback (complaints, ratings, implicit signals) — subjective
+
+        Feedback-derived weaknesses often surface problems metrics can't see:
+        "the code compiled but was wrong" or "it didn't understand my question."
+        """
         metrics = await self.get_metrics(days)
         weaknesses: list[Weakness] = []
 
-        if metrics.total_interactions == 0:
-            return weaknesses
-
-        # Low success rate
-        if metrics.success_rate < 0.8:
-            weaknesses.append(Weakness(
-                category="reliability",
-                severity=1.0 - metrics.success_rate,
-                description=f"Low success rate: {metrics.success_rate:.1%}",
-                sample_count=metrics.total_interactions,
-            ))
-
-        # High latency
-        if metrics.avg_latency_ms > 10000:
-            weaknesses.append(Weakness(
-                category="performance",
-                severity=min(1.0, metrics.avg_latency_ms / 30000),
-                description=f"High average latency: {metrics.avg_latency_ms:.0f}ms",
-                sample_count=metrics.total_interactions,
-            ))
-
-        # High cost
-        if metrics.total_cost > 1.0 and metrics.total_interactions > 0:
-            cost_per = metrics.total_cost / metrics.total_interactions
-            if cost_per > 0.05:
+        if metrics.total_interactions > 0:
+            # Low success rate
+            if metrics.success_rate < 0.8:
                 weaknesses.append(Weakness(
-                    category="cost",
-                    severity=min(1.0, cost_per / 0.20),
-                    description=f"High cost per interaction: ${cost_per:.4f}",
+                    category="reliability",
+                    severity=1.0 - metrics.success_rate,
+                    description=f"Low success rate: {metrics.success_rate:.1%}",
                     sample_count=metrics.total_interactions,
                 ))
+
+            # High latency
+            if metrics.avg_latency_ms > 10000:
+                weaknesses.append(Weakness(
+                    category="performance",
+                    severity=min(1.0, metrics.avg_latency_ms / 30000),
+                    description=f"High average latency: {metrics.avg_latency_ms:.0f}ms",
+                    sample_count=metrics.total_interactions,
+                ))
+
+            # High cost
+            if metrics.total_cost > 1.0:
+                cost_per = metrics.total_cost / metrics.total_interactions
+                if cost_per > 0.05:
+                    weaknesses.append(Weakness(
+                        category="cost",
+                        severity=min(1.0, cost_per / 0.20),
+                        description=f"High cost per interaction: ${cost_per:.4f}",
+                        sample_count=metrics.total_interactions,
+                    ))
+
+        # Merge user feedback into weakness diagnosis
+        feedback_weaknesses = await self._diagnose_from_feedback(days)
+        weaknesses.extend(feedback_weaknesses)
+
+        # Deduplicate by category (keep the higher-severity one)
+        seen: dict[str, Weakness] = {}
+        for w in weaknesses:
+            if w.category not in seen or w.severity > seen[w.category].severity:
+                seen[w.category] = w
+        weaknesses = list(seen.values())
 
         # Store weaknesses
         await self._ensure_db()
@@ -156,6 +173,18 @@ class PerformanceObservatory:
             await db.commit()
 
         return weaknesses
+
+    async def _diagnose_from_feedback(self, days: int = 7) -> list[Weakness]:
+        """Pull weaknesses from the user feedback system.
+
+        This is the critical bridge: user complaints → Darwin evolution targets.
+        """
+        try:
+            from pikaclaw.feedback.analyzer import FeedbackAnalyzer
+            analyzer = FeedbackAnalyzer()
+            return await analyzer.to_weaknesses(days=days, min_count=1)
+        except Exception:
+            return []
 
     async def get_hallucination_rate(self, days: int = 7) -> float:
         """Get hallucination rate (ratio of flagged responses)."""

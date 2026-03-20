@@ -135,7 +135,11 @@ class HypothesisGenerator:
     """Generates improvement hypotheses from weaknesses and research."""
 
     def generate(self, weaknesses: list, findings: dict | None = None) -> list[Hypothesis]:
-        """Generate hypotheses from observed weaknesses and research findings."""
+        """Generate hypotheses from observed weaknesses and research findings.
+
+        Handles both system-metric weaknesses (reliability, performance, cost)
+        and user-feedback weaknesses (accuracy, comprehension, hallucination, etc).
+        """
         hypotheses: list[Hypothesis] = []
 
         for weakness in weaknesses:
@@ -143,42 +147,111 @@ class HypothesisGenerator:
             severity = getattr(weakness, "severity", 0.5)
             desc = getattr(weakness, "description", str(weakness))
 
-            if category == "reliability":
-                hypotheses.append(Hypothesis(
-                    target_weakness=desc,
-                    technique="retry_with_backoff",
-                    mechanism="Add retry logic with exponential backoff for failed model calls",
-                    expected_improvement=0.3,
-                    confidence=0.8,
-                    description=f"Improve reliability by retrying failed calls",
-                ))
+            generated = _HYPOTHESIS_RECIPES.get(category)
+            if generated:
+                for recipe in generated:
+                    hypotheses.append(Hypothesis(
+                        target_weakness=desc,
+                        technique=recipe["technique"],
+                        mechanism=recipe["mechanism"],
+                        expected_improvement=recipe["expected_improvement"] * severity,
+                        confidence=recipe["confidence"],
+                        description=recipe["description"],
+                    ))
+            else:
+                # Unknown category — generic improvement
                 hypotheses.append(Hypothesis(
                     target_weakness=desc,
                     technique="prompt_refinement",
-                    mechanism="Refine system prompts to reduce ambiguous instructions",
-                    expected_improvement=0.2,
-                    confidence=0.6,
-                    description=f"Reduce failures through better prompting",
-                ))
-            elif category == "performance":
-                hypotheses.append(Hypothesis(
-                    target_weakness=desc,
-                    technique="model_routing",
-                    mechanism="Route simple tasks to faster/smaller models",
-                    expected_improvement=0.4,
-                    confidence=0.7,
-                    description=f"Speed up by using smaller models for simple tasks",
-                ))
-            elif category == "cost":
-                hypotheses.append(Hypothesis(
-                    target_weakness=desc,
-                    technique="context_compression",
-                    mechanism="Compress context before sending to expensive models",
-                    expected_improvement=0.3,
-                    confidence=0.7,
-                    description=f"Reduce cost through context compression",
+                    mechanism="Refine prompts and behavior based on user feedback",
+                    expected_improvement=0.2 * severity,
+                    confidence=0.5,
+                    description=f"Address '{category}' weakness through prompt tuning",
                 ))
 
-        # Sort by priority
+        # Sort by priority (confidence * expected_improvement)
         hypotheses.sort(key=lambda h: h.priority, reverse=True)
         return hypotheses
+
+
+# ─── Hypothesis recipes for each weakness category ───────────────────────
+# System-metric categories + feedback-derived categories
+_HYPOTHESIS_RECIPES: dict[str, list[dict]] = {
+    # === System metrics ===
+    "reliability": [
+        {"technique": "retry_with_backoff", "mechanism": "Add retry logic with exponential backoff for failed model calls",
+         "expected_improvement": 0.3, "confidence": 0.8, "description": "Improve reliability by retrying failed calls"},
+        {"technique": "prompt_refinement", "mechanism": "Refine system prompts to reduce ambiguous instructions",
+         "expected_improvement": 0.2, "confidence": 0.6, "description": "Reduce failures through better prompting"},
+    ],
+    "performance": [
+        {"technique": "model_routing", "mechanism": "Route simple tasks to faster/smaller models",
+         "expected_improvement": 0.4, "confidence": 0.7, "description": "Speed up by using smaller models for simple tasks"},
+    ],
+    "cost": [
+        {"technique": "context_compression", "mechanism": "Compress context before sending to expensive models",
+         "expected_improvement": 0.3, "confidence": 0.7, "description": "Reduce cost through context compression"},
+    ],
+
+    # === Feedback-derived: user said "wrong answer" ===
+    "accuracy": [
+        {"technique": "grounding_verification", "mechanism": "Cross-check answers against file content before responding",
+         "expected_improvement": 0.4, "confidence": 0.7, "description": "Verify facts against actual code/files before answering"},
+        {"technique": "chain_of_thought", "mechanism": "Force step-by-step reasoning before giving final answer",
+         "expected_improvement": 0.3, "confidence": 0.65, "description": "Reduce wrong answers through structured reasoning"},
+    ],
+
+    # === Feedback-derived: user said "didn't understand me" ===
+    "comprehension": [
+        {"technique": "intent_parsing", "mechanism": "Add explicit intent classification before acting",
+         "expected_improvement": 0.35, "confidence": 0.6, "description": "Better understand user intent before executing"},
+        {"technique": "clarification_prompt", "mechanism": "Ask clarifying questions when request is ambiguous",
+         "expected_improvement": 0.3, "confidence": 0.7, "description": "Ask before assuming when instructions are unclear"},
+    ],
+
+    # === Feedback-derived: user said "incomplete" ===
+    "completeness": [
+        {"technique": "multi_step_planning", "mechanism": "Plan all steps before executing, verify checklist at end",
+         "expected_improvement": 0.4, "confidence": 0.7, "description": "Plan first, execute all steps, verify completion"},
+        {"technique": "task_decomposition", "mechanism": "Break complex tasks into explicit subtasks with tracking",
+         "expected_improvement": 0.3, "confidence": 0.65, "description": "Decompose tasks so nothing gets missed"},
+    ],
+
+    # === Feedback-derived: user said "bad code" ===
+    "code_quality": [
+        {"technique": "code_review_loop", "mechanism": "Self-review generated code for bugs before presenting",
+         "expected_improvement": 0.35, "confidence": 0.7, "description": "Review own code for correctness before submitting"},
+        {"technique": "test_generation", "mechanism": "Auto-generate and run tests for written code",
+         "expected_improvement": 0.3, "confidence": 0.65, "description": "Write tests to catch bugs before the user does"},
+    ],
+
+    # === Feedback-derived: user said "hallucination" ===
+    "hallucination": [
+        {"technique": "grounding_verification", "mechanism": "Verify all file/function references exist before claiming they do",
+         "expected_improvement": 0.5, "confidence": 0.75, "description": "Stop making up files and functions that don't exist"},
+        {"technique": "source_citation", "mechanism": "Always reference the actual file and line number",
+         "expected_improvement": 0.3, "confidence": 0.7, "description": "Cite sources so claims can be verified"},
+    ],
+
+    # === Feedback-derived: user said "tool failure" ===
+    "tool_reliability": [
+        {"technique": "tool_error_handling", "mechanism": "Better error recovery and fallback when tools fail",
+         "expected_improvement": 0.3, "confidence": 0.75, "description": "Gracefully handle tool failures instead of crashing"},
+        {"technique": "tool_validation", "mechanism": "Validate tool inputs before execution",
+         "expected_improvement": 0.25, "confidence": 0.7, "description": "Check inputs are valid before calling tools"},
+    ],
+
+    # === Feedback-derived: user said "repetitive / going in circles" ===
+    "loop_detection": [
+        {"technique": "conversation_tracking", "mechanism": "Track attempted approaches and avoid repeating failed ones",
+         "expected_improvement": 0.4, "confidence": 0.7, "description": "Remember what was already tried and don't repeat it"},
+        {"technique": "stuck_detection", "mechanism": "Detect when stuck in a loop and try a different approach",
+         "expected_improvement": 0.35, "confidence": 0.65, "description": "Recognize loops and break out with new strategies"},
+    ],
+
+    # === Feedback-derived: safety concern ===
+    "safety": [
+        {"technique": "security_hardening", "mechanism": "Strengthen input validation and output sanitization",
+         "expected_improvement": 0.3, "confidence": 0.8, "description": "Harden security checks based on reported incidents"},
+    ],
+}

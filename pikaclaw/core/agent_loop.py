@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from pikaclaw.core.messages import (
     TextMessage, ToolCallMessage, ToolResultMessage,
-    DoneMessage, ErrorMessage,
+    DoneMessage, ErrorMessage, FeedbackMessage,
 )
 from pikaclaw.core.system_prompt import SystemPromptBuilder
 
@@ -65,6 +65,8 @@ class AgentLoop:
         self._sanitizer = None
         self._sentinel = None
         self._audit = None
+        self._signal_detector = None
+        self._feedback_collector = None
 
     @property
     def sanitizer(self):
@@ -95,6 +97,26 @@ class AgentLoop:
             except ImportError:
                 self._audit = None
         return self._audit
+
+    @property
+    def signal_detector(self):
+        if self._signal_detector is None:
+            try:
+                from pikaclaw.feedback.signals import ImplicitSignalDetector
+                self._signal_detector = ImplicitSignalDetector()
+            except ImportError:
+                self._signal_detector = None
+        return self._signal_detector
+
+    @property
+    def feedback_collector(self):
+        if self._feedback_collector is None:
+            try:
+                from pikaclaw.feedback.collector import FeedbackCollector
+                self._feedback_collector = FeedbackCollector()
+            except ImportError:
+                self._feedback_collector = None
+        return self._feedback_collector
 
     def _get_agent(self, state: LoopState) -> AgentDefinition:
         """Get the active agent definition."""
@@ -140,6 +162,49 @@ class AgentLoop:
 
             # Add user message to conversation
             state.messages.append({"role": "user", "content": prompt})
+
+            # Detect implicit frustration signals in user message
+            if self.signal_detector:
+                last_error = None
+                if len(state.messages) >= 2:
+                    prev = state.messages[-2]
+                    if prev.get("role") == "tool" and "error" in str(prev.get("content", "")).lower():
+                        last_error = prev.get("content", "")[:200]
+
+                signals = self.signal_detector.analyze_message(prompt, context={
+                    "agent": state.active_agent,
+                    "turn_count": state.turn_count,
+                    "last_tool_error": last_error,
+                })
+                for signal in signals:
+                    # Record as implicit feedback
+                    if self.feedback_collector:
+                        # Build conversation snippet for context
+                        snippet = "\n".join(
+                            f"{m.get('role', '?')}: {str(m.get('content', ''))[:100]}"
+                            for m in state.messages[-4:]
+                        )
+                        try:
+                            await self.feedback_collector.submit(
+                                rating=0,
+                                category=signal.category,
+                                comment=signal.description,
+                                session_id=state.session_id,
+                                agent=state.active_agent,
+                                model=state.current_model or "",
+                                turn_count=state.turn_count,
+                                conversation_snippet=snippet,
+                                source="implicit",
+                            )
+                        except Exception:
+                            pass
+
+                    yield FeedbackMessage(
+                        signal_type=signal.signal_type,
+                        category=signal.category,
+                        confidence=signal.confidence,
+                        description=signal.description,
+                    )
 
             # Agent loop: keep going until model responds with text only (no tool calls)
             while state.turn_count < state.max_turns and not state.interrupted:

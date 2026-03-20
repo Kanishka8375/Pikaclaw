@@ -65,7 +65,30 @@ class DarwinEngine:
         self.watchdog = DarwinWatchdog()
         self.anti_hallucination = AntiHallucinationPipeline(model_router)
 
+        # Feedback integration (lazy-loaded)
+        self._feedback_collector = None
+        self._feedback_analyzer = None
         self._last_cycle = ""
+
+    @property
+    def feedback_collector(self):
+        if self._feedback_collector is None:
+            try:
+                from pikaclaw.feedback.collector import FeedbackCollector
+                self._feedback_collector = FeedbackCollector()
+            except ImportError:
+                pass
+        return self._feedback_collector
+
+    @property
+    def feedback_analyzer(self):
+        if self._feedback_analyzer is None:
+            try:
+                from pikaclaw.feedback.analyzer import FeedbackAnalyzer
+                self._feedback_analyzer = FeedbackAnalyzer()
+            except ImportError:
+                pass
+        return self._feedback_analyzer
 
     async def evolution_cycle(self) -> EvolutionResult:
         """Run a complete evolution cycle.
@@ -136,6 +159,8 @@ class DarwinEngine:
                 if deploy_result.success:
                     result.patches_deployed += 1
                     result.improvements.append(f"{hypothesis.technique}: +{bench.delta:.1f}")
+                    # Close the feedback loop: mark related feedback as resolved
+                    await self._resolve_related_feedback(hypothesis, commit_hash)
                 else:
                     result.errors.append(f"Deploy failed for {hypothesis.technique}: {deploy_result.errors}")
 
@@ -173,3 +198,40 @@ class DarwinEngine:
     async def get_log(self, limit: int = 20):
         """Get experiment log from the chronicle."""
         return await self.chronicle.get_history(limit)
+
+    async def get_feedback_summary(self, days: int = 7) -> dict:
+        """Get user feedback summary. Surfaces what users are unhappy about."""
+        if self.feedback_collector:
+            return await self.feedback_collector.get_satisfaction_score(days)
+        return {"total_feedback": 0, "avg_rating": 0, "resolution_rate": 0}
+
+    async def _resolve_related_feedback(self, hypothesis, resolution_id: str) -> int:
+        """Mark feedback entries as resolved when Darwin deploys a fix.
+
+        Maps hypothesis techniques back to feedback categories and marks
+        matching unresolved entries as addressed.
+        """
+        if not self.feedback_collector:
+            return 0
+
+        from pikaclaw.feedback.analyzer import CATEGORY_TO_WEAKNESS
+
+        # Reverse map: technique → feedback categories
+        technique_to_categories: dict[str, list[str]] = {}
+        for fb_cat, (_, technique) in CATEGORY_TO_WEAKNESS.items():
+            technique_to_categories.setdefault(technique, []).append(fb_cat)
+
+        # Find which feedback categories this hypothesis addresses
+        target_categories = technique_to_categories.get(hypothesis.technique, [])
+        if not target_categories:
+            return 0
+
+        resolved_count = 0
+        for category in target_categories:
+            entries = await self.feedback_collector.get_by_category(category)
+            for entry in entries:
+                if not entry.resolved:
+                    await self.feedback_collector.mark_resolved(entry.id, resolution_id)
+                    resolved_count += 1
+
+        return resolved_count

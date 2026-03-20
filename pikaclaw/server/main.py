@@ -108,3 +108,72 @@ async def interrupt():
     _, state = _get_loop()
     state.interrupted = True
     return {"status": "interrupted"}
+
+
+# ─── Feedback endpoints ──────────────────────────────────────
+
+class FeedbackRequest(BaseModel):
+    rating: int = 0
+    category: str = "other"
+    comment: str = ""
+    session_id: str = ""
+
+
+@app.post("/feedback")
+async def submit_feedback(req: FeedbackRequest):
+    """Submit user feedback about the last response."""
+    from pikaclaw.feedback.collector import FeedbackCollector
+    _, state = _get_loop()
+    collector = FeedbackCollector()
+    snippet = "\n".join(
+        f"{m.get('role', '?')}: {str(m.get('content', ''))[:100]}"
+        for m in state.messages[-6:]
+    )
+    entry_id = await collector.submit(
+        rating=req.rating,
+        category=req.category,
+        comment=req.comment,
+        session_id=req.session_id or state.session_id,
+        agent=state.active_agent,
+        model=state.current_model or "",
+        turn_count=state.turn_count,
+        conversation_snippet=snippet,
+        source="explicit",
+    )
+    return {"status": "ok", "feedback_id": entry_id}
+
+
+@app.get("/feedback/summary")
+async def feedback_summary(days: int = 7):
+    """Get feedback satisfaction summary."""
+    from pikaclaw.feedback.collector import FeedbackCollector
+    collector = FeedbackCollector()
+    return await collector.get_satisfaction_score(days=days)
+
+
+@app.get("/feedback/patterns")
+async def feedback_patterns(days: int = 7):
+    """Get feedback patterns that Darwin will target."""
+    from pikaclaw.feedback.analyzer import FeedbackAnalyzer
+    analyzer = FeedbackAnalyzer()
+    patterns = await analyzer.analyze(days=days, min_count=1)
+    return [
+        {
+            "category": p.weakness_category,
+            "technique": p.technique,
+            "severity": p.severity,
+            "count": p.count,
+            "avg_rating": p.avg_rating,
+            "description": p.description,
+            "sample_comments": p.sample_comments,
+        }
+        for p in patterns
+    ]
+
+
+@app.get("/feedback/trend")
+async def feedback_trend(days: int = 14):
+    """Get daily feedback trend."""
+    from pikaclaw.feedback.analyzer import FeedbackAnalyzer
+    analyzer = FeedbackAnalyzer()
+    return await analyzer.get_trend(days=days)

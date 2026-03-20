@@ -73,3 +73,13 @@ class CompactMessage:
     original_tokens: int = 0
     compacted_tokens: int = 0
     type: str = "compact"
+
+
+@dataclass
+class FeedbackMessage:
+    """Emitted when implicit frustration is detected."""
+    signal_type: str = ""
+    category: str = ""
+    confidence: float = 0.0
+    description: str = ""
+    type: str = "feedback_signal"
