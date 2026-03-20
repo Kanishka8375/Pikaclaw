@@ -53,3 +53,27 @@ class ProjectMemory:
             async with db.execute(sql, params) as cursor:
                 rows = await cursor.fetchall()
                 return [{"key": r[0], "value": r[1], "category": r[2]} for r in rows]
+
+    async def forget(self, key: str) -> bool:
+        """Remove a memory entry by key."""
+        await self._ensure_db()
+        import aiosqlite
+        async with aiosqlite.connect(str(self.db_path)) as db:
+            cursor = await db.execute("DELETE FROM facts WHERE key = ?", (key,))
+            await db.commit()
+            return cursor.rowcount > 0
+
+    async def get_all(self, category: str | None = None) -> list[dict]:
+        """Get all memory entries, optionally filtered by category."""
+        await self._ensure_db()
+        import aiosqlite
+        async with aiosqlite.connect(str(self.db_path)) as db:
+            if category:
+                sql = "SELECT key, value, category FROM facts WHERE category = ? ORDER BY updated_at DESC"
+                params = (category,)
+            else:
+                sql = "SELECT key, value, category FROM facts ORDER BY updated_at DESC"
+                params = ()
+            async with db.execute(sql, params) as cursor:
+                rows = await cursor.fetchall()
+                return [{"key": r[0], "value": r[1], "category": r[2]} for r in rows]

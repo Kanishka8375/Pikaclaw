@@ -69,3 +69,24 @@ class SessionManager:
             async with db.execute("SELECT id, created_at, agent, model FROM sessions ORDER BY updated_at DESC LIMIT ?", (limit,)) as cursor:
                 rows = await cursor.fetchall()
                 return [{"id": r[0], "created_at": r[1], "agent": r[2], "model": r[3]} for r in rows]
+
+    async def delete_session(self, session_id: str) -> bool:
+        """Delete a session by ID."""
+        await self._ensure_db()
+        import aiosqlite
+        async with aiosqlite.connect(str(self.db_path)) as db:
+            cursor = await db.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+            await db.commit()
+            return cursor.rowcount > 0
+
+    async def search_sessions(self, query: str, limit: int = 20) -> list[dict]:
+        """Search sessions by message content."""
+        await self._ensure_db()
+        import aiosqlite
+        async with aiosqlite.connect(str(self.db_path)) as db:
+            async with db.execute(
+                "SELECT id, created_at, agent, model FROM sessions WHERE messages LIKE ? ORDER BY updated_at DESC LIMIT ?",
+                (f"%{query}%", limit),
+            ) as cursor:
+                rows = await cursor.fetchall()
+                return [{"id": r[0], "created_at": r[1], "agent": r[2], "model": r[3]} for r in rows]
