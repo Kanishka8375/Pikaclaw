@@ -12,6 +12,9 @@ import {
   mockNotifications,
   dashboardStats,
 } from "@/lib/mock-data";
+import OpenClawBadge from "@/components/app/OpenClawBadge";
+import OpenClawMetricsBar from "@/components/app/OpenClawMetricsBar";
+import { openClawStatus, openClawMetrics, openClawAgents } from "@/lib/openclaw";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -161,6 +164,65 @@ export default function DashboardPage() {
           </h1>
           <p className="mt-1 text-text-secondary">{formatDate(new Date())}</p>
         </div>
+      </motion.div>
+
+      {/* ---- OpenClaw Engine Status ---- */}
+      <motion.div variants={fadeInUp}>
+        <Card hover={false} className="relative overflow-hidden !p-0">
+          <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-400 opacity-5 blur-3xl" />
+          <div className="border-b border-void-border px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/20">
+                <svg className="h-5 w-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-semibold text-text-primary">OpenClaw Engine</h2>
+                  <OpenClawBadge size="sm" showVersion />
+                </div>
+                <p className="text-xs text-text-muted">Open-source 24/7 automation &middot; {openClawStatus.uptime} uptime</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-xs text-text-muted">Active Agents</p>
+                <p className="text-lg font-bold text-emerald-400">{openClawStatus.activeAgents}<span className="text-text-muted text-xs font-normal">/{openClawStatus.totalAgents}</span></p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-text-muted">Tasks Running</p>
+                <p className="text-lg font-bold text-text-primary">{openClawMetrics.tasksRunning}</p>
+              </div>
+            </div>
+          </div>
+          <div className="px-6 py-4">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div>
+                <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">Performance Metrics</h3>
+                <OpenClawMetricsBar accuracy={openClawMetrics.accuracy} consistency={openClawMetrics.consistency} speed={openClawMetrics.speed} />
+              </div>
+              <div>
+                <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">Agent Activity</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {openClawAgents.slice(0, 6).map((agent) => (
+                    <div key={agent.name} className="flex items-center gap-2 rounded-lg bg-void/50 px-2.5 py-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                        agent.status === "active" ? "bg-emerald-400" :
+                        agent.status === "processing" ? "bg-[#818CF8] animate-pulse" :
+                        agent.status === "error" ? "bg-red-400" :
+                        "bg-[#64748B]"
+                      }`} />
+                      <span className="text-[10px] text-text-secondary truncate">{agent.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
       </motion.div>
 
       {/* ---- Stats Grid ---- */}
