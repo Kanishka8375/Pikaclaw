@@ -8,6 +8,7 @@ import GradientText from "@/components/ui/GradientText";
 import { staggerContainer, fadeInUp } from "@/lib/animations";
 import { mockLocations } from "@/lib/mock-data";
 import type { Location } from "@/lib/types";
+import OpenClawBadge from "@/components/app/OpenClawBadge";
 
 const typeColors: Record<Location["type"], string> = {
   interior: "bg-amber-500/20 text-amber-400 border border-amber-500/30",
@@ -43,9 +44,12 @@ export default function WorldAtlasPage() {
           <h1 className="text-3xl font-bold text-text-primary">
             World <GradientText>Atlas</GradientText>
           </h1>
-          <p className="mt-1 text-text-secondary">
-            Explore and manage locations across your productions.
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-text-secondary">
+              Explore and manage locations across your productions.
+            </p>
+            <OpenClawBadge size="sm" />
+          </div>
         </div>
         <Button size="md">
           <span className="flex items-center gap-2">
@@ -99,6 +103,14 @@ export default function WorldAtlasPage() {
               <div className="mt-4 flex items-center gap-4 text-xs text-text-muted">
                 <span>Mood: {loc.mood}</span>
                 <span>Eps: {loc.usedInEpisodes.join(", ")}</span>
+              </div>
+
+              {/* OpenClaw consistency marker */}
+              <div className="mt-3 pt-3 border-t border-void-border flex items-center gap-1.5">
+                <svg className="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+                </svg>
+                <span className="text-[10px] text-emerald-400 font-medium">OpenClaw scene consistency locked</span>
               </div>
 
               {/* Expand */}

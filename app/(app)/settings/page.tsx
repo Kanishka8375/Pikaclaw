@@ -8,12 +8,14 @@ import Card from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
 import GradientText from "@/components/ui/GradientText";
 import { staggerContainer, fadeInUp } from "@/lib/animations";
+import OpenClawMetricsBar from "@/components/app/OpenClawMetricsBar";
+import { openClawStatus, openClawMetrics, openClawAgents } from "@/lib/openclaw";
 
 /* ------------------------------------------------------------------ */
 /*  Types & Constants                                                  */
 /* ------------------------------------------------------------------ */
 
-type Tab = "profile" | "preferences" | "api-keys" | "self-hosted" | "notifications";
+type Tab = "profile" | "preferences" | "api-keys" | "openclaw" | "self-hosted" | "notifications";
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   {
@@ -41,6 +43,15 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     icon: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+      </svg>
+    ),
+  },
+  {
+    id: "openclaw",
+    label: "OpenClaw",
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
       </svg>
     ),
   },
@@ -370,6 +381,147 @@ function APIKeysTab() {
   );
 }
 
+function OpenClawTab() {
+  const [instanceUrl, setInstanceUrl] = useState("https://openclaw.local:8080");
+  const [apiToken, setApiToken] = useState("");
+  const [connectionStatus, setConnectionStatus] = useState<"disconnected" | "testing" | "connected">("connected");
+  const [autoRestart, setAutoRestart] = useState(true);
+  const [heartbeatInterval, setHeartbeatInterval] = useState("30");
+  const [selectedModel, setSelectedModel] = useState("Claude Sonnet 4");
+
+  const handleTestConnection = () => {
+    setConnectionStatus("testing");
+    setTimeout(() => setConnectionStatus("connected"), 2000);
+  };
+
+  const statusColors = {
+    disconnected: "bg-red-500/20 text-red-400 border-red-500/30",
+    testing: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+    connected: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+  };
+
+  return (
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+      className="space-y-6"
+    >
+      {/* Engine Status */}
+      <Card>
+        <motion.div variants={fadeInUp} className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-text-primary">OpenClaw Engine</h3>
+                <p className="text-xs text-text-muted">v{openClawStatus.version} &middot; Uptime: {openClawStatus.uptime}</p>
+              </div>
+            </div>
+            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium border ${statusColors[connectionStatus]}`}>
+              <span className={`h-2 w-2 rounded-full ${connectionStatus === "connected" ? "bg-emerald-400 animate-pulse" : connectionStatus === "testing" ? "bg-amber-400 animate-pulse" : "bg-red-400"}`} />
+              {connectionStatus === "connected" ? "Online" : connectionStatus === "testing" ? "Testing..." : "Offline"}
+            </span>
+          </div>
+          <OpenClawMetricsBar accuracy={openClawMetrics.accuracy} consistency={openClawMetrics.consistency} speed={openClawMetrics.speed} />
+          <div className="grid grid-cols-3 gap-4 pt-2">
+            <div className="text-center p-3 rounded-xl bg-void border border-void-border">
+              <p className="text-xs text-text-muted">Active Agents</p>
+              <p className="text-lg font-bold text-emerald-400 mt-1">{openClawStatus.activeAgents}/{openClawStatus.totalAgents}</p>
+            </div>
+            <div className="text-center p-3 rounded-xl bg-void border border-void-border">
+              <p className="text-xs text-text-muted">Tasks Completed</p>
+              <p className="text-lg font-bold text-text-primary mt-1">{openClawMetrics.tasksCompleted.toLocaleString()}</p>
+            </div>
+            <div className="text-center p-3 rounded-xl bg-void border border-void-border">
+              <p className="text-xs text-text-muted">Avg Response</p>
+              <p className="text-lg font-bold text-[#818CF8] mt-1">{openClawMetrics.avgResponseTime}</p>
+            </div>
+          </div>
+        </motion.div>
+      </Card>
+
+      {/* Connect Your Instance */}
+      <Card>
+        <motion.div variants={fadeInUp} className="space-y-4">
+          <h3 className="text-lg font-semibold text-text-primary">Connect Your OpenClaw Instance</h3>
+          <p className="text-sm text-text-muted">
+            Connect your own self-hosted OpenClaw instance for full control over your AI automation pipeline.
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-2">Instance URL</label>
+            <Input value={instanceUrl} onChange={(e) => setInstanceUrl(e.target.value)} placeholder="https://your-openclaw-instance:8080" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-2">API Token</label>
+            <Input type="password" value={apiToken} onChange={(e) => setApiToken(e.target.value)} placeholder="oc_token_xxxxxxxxxxxx" />
+          </div>
+          <div className="flex gap-3">
+            <Button variant="secondary" size="sm" onClick={handleTestConnection}>
+              Test Connection
+            </Button>
+            <Button size="sm">Save & Connect</Button>
+          </div>
+        </motion.div>
+      </Card>
+
+      {/* Heartbeat Scheduler */}
+      <Card>
+        <motion.div variants={fadeInUp} className="space-y-4">
+          <h3 className="text-lg font-semibold text-text-primary">Heartbeat Scheduler</h3>
+          <p className="text-sm text-text-muted">
+            Configure the heartbeat scheduler for 24/7 autonomous operation. OpenClaw will keep agents alive and restart failed tasks automatically.
+          </p>
+          <div className="divide-y divide-void-border">
+            <Toggle label="Auto-Restart Failed Tasks" description="Automatically restart agents that crash or timeout" enabled={autoRestart} onChange={setAutoRestart} />
+          </div>
+          <Select label="Heartbeat Interval (seconds)" value={heartbeatInterval} onChange={setHeartbeatInterval} options={["10", "15", "30", "60", "120"]} />
+        </motion.div>
+      </Card>
+
+      {/* Model Selection */}
+      <Card>
+        <motion.div variants={fadeInUp} className="space-y-4">
+          <h3 className="text-lg font-semibold text-text-primary">AI Model Configuration</h3>
+          <p className="text-sm text-text-muted">
+            OpenClaw is model-agnostic. Select the default model for your agents.
+          </p>
+          <Select label="Default Model" value={selectedModel} onChange={setSelectedModel} options={["Claude Sonnet 4", "Claude Opus 4", "GPT-4o", "Gemini 2.5 Pro", "Llama 4 Scout", "Custom / Local"]} />
+        </motion.div>
+      </Card>
+
+      {/* Agent Overview */}
+      <Card>
+        <motion.div variants={fadeInUp} className="space-y-4">
+          <h3 className="text-lg font-semibold text-text-primary">Agent Overview</h3>
+          <p className="text-sm text-text-muted">All OpenClaw agents powering SYNTHOS features.</p>
+          <div className="space-y-2">
+            {openClawAgents.map((agent) => (
+              <div key={agent.name} className="flex items-center justify-between p-3 rounded-xl bg-void border border-void-border hover:border-indigo/20 transition-colors">
+                <div className="flex items-center gap-3">
+                  <span className={`h-2 w-2 rounded-full ${agent.status === "active" || agent.status === "processing" ? "bg-emerald-400 animate-pulse" : agent.status === "idle" ? "bg-amber-400" : "bg-red-400"}`} />
+                  <div>
+                    <p className="text-sm font-medium text-text-primary">{agent.name}</p>
+                    <p className="text-[10px] text-text-muted capitalize">{agent.status} &middot; {agent.tasksCompleted} tasks</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 text-xs text-text-muted">
+                  <span>Acc <span className="text-emerald-400 font-mono font-bold">{agent.accuracy}%</span></span>
+                  <span>Spd <span className="text-[#F472B6] font-mono font-bold">{agent.speed}%</span></span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      </Card>
+    </motion.div>
+  );
+}
+
 function SelfHostedTab() {
   const [connectionStatus, setConnectionStatus] = useState<"disconnected" | "testing" | "connected">("disconnected");
 
@@ -602,6 +754,7 @@ export default function SettingsPage() {
     profile: <ProfileTab />,
     preferences: <PreferencesTab />,
     "api-keys": <APIKeysTab />,
+    "openclaw": <OpenClawTab />,
     "self-hosted": <SelfHostedTab />,
     notifications: <NotificationsTab />,
   };

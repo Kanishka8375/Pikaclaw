@@ -6,6 +6,9 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import GradientText from "@/components/ui/GradientText";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
+import OpenClawBadge from "@/components/app/OpenClawBadge";
+import OpenClawMetricsBar from "@/components/app/OpenClawMetricsBar";
+import { openClawAgents } from "@/lib/openclaw";
 
 /* ------------------------------------------------------------------ */
 /*  Types & Data                                                       */
@@ -171,7 +174,10 @@ export default function EmotionChoreographyPage() {
           <h1 className="text-3xl font-bold text-text-primary">
             Emotion <GradientText>Choreography</GradientText>
           </h1>
-          <p className="text-text-secondary mt-1">Direct emotional arcs across every scene channel</p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-text-secondary">Direct emotional arcs across every scene channel</p>
+            <OpenClawBadge size="sm" />
+          </div>
         </div>
 
         {/* Scene selector */}
@@ -402,6 +408,24 @@ export default function EmotionChoreographyPage() {
             Preview Sync
           </span>
         </Button>
+      </motion.div>
+
+      {/* OpenClaw Emotion Engine */}
+      <motion.div variants={fadeInUp}>
+        <Card>
+          <div className="flex items-center gap-2 mb-4">
+            <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+            </svg>
+            <span className="text-sm font-semibold text-emerald-400">OpenClaw Emotion Engine</span>
+            <span className="text-[10px] text-text-muted ml-auto">24/7 real-time emotion sync</span>
+          </div>
+          <OpenClawMetricsBar
+            accuracy={openClawAgents.find(a => a.name === "Voice Synthesizer")?.accuracy ?? 98}
+            consistency={openClawAgents.find(a => a.name === "Voice Synthesizer")?.consistency ?? 97}
+            speed={openClawAgents.find(a => a.name === "Voice Synthesizer")?.speed ?? 95}
+          />
+        </Card>
       </motion.div>
 
       {/* Intensity Heat Strip */}

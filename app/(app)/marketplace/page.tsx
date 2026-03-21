@@ -8,6 +8,7 @@ import GradientText from "@/components/ui/GradientText";
 import { staggerContainer, fadeInUp } from "@/lib/animations";
 import { mockMarketplaceItems } from "@/lib/mock-data";
 import type { MarketplaceItem } from "@/lib/types";
+import OpenClawBadge from "@/components/app/OpenClawBadge";
 
 type CategoryFilter = MarketplaceItem["category"] | "all";
 
@@ -74,9 +75,12 @@ export default function MarketplacePage() {
         <h1 className="text-3xl font-bold text-text-primary">
           <GradientText>Marketplace</GradientText>
         </h1>
-        <p className="mt-1 text-text-secondary">
-          Discover workflows, templates, presets, and assets from the community.
-        </p>
+        <div className="flex items-center gap-2 mt-1">
+          <p className="text-text-secondary">
+            Discover workflows, templates, presets, and assets from the community.
+          </p>
+          <OpenClawBadge size="sm" />
+        </div>
       </motion.div>
 
       {/* Search + Filters */}

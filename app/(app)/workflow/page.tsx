@@ -6,6 +6,9 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import GradientText from "@/components/ui/GradientText";
 import { staggerContainer, fadeInUp } from "@/lib/animations";
+import OpenClawBadge from "@/components/app/OpenClawBadge";
+import OpenClawMetricsBar from "@/components/app/OpenClawMetricsBar";
+import { openClawMetrics } from "@/lib/openclaw";
 
 interface WorkflowNode {
   id: string;
@@ -96,9 +99,12 @@ export default function WorkflowPage() {
           <h1 className="text-3xl font-bold text-text-primary">
             Workflow <GradientText>Canvas</GradientText>
           </h1>
-          <p className="mt-1 text-text-secondary">
-            Design and orchestrate your AI agent pipeline visually.
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-text-secondary">
+              Design and orchestrate your AI agent pipeline visually.
+            </p>
+            <OpenClawBadge size="sm" />
+          </div>
         </div>
         <div className="flex gap-3">
           <Button variant="secondary" size="md">
@@ -234,6 +240,20 @@ export default function WorkflowPage() {
             </div>
           ))}
         </div>
+      </motion.div>
+
+      {/* OpenClaw Automation Engine */}
+      <motion.div variants={fadeInUp}>
+        <Card>
+          <div className="flex items-center gap-2 mb-4">
+            <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+            </svg>
+            <span className="text-sm font-semibold text-emerald-400">OpenClaw Powering This Workflow</span>
+            <span className="text-[10px] text-text-muted ml-auto">{openClawMetrics.tasksCompleted.toLocaleString()} tasks completed</span>
+          </div>
+          <OpenClawMetricsBar accuracy={openClawMetrics.accuracy} consistency={openClawMetrics.consistency} speed={openClawMetrics.speed} />
+        </Card>
       </motion.div>
 
       {/* Pipeline Stats */}
