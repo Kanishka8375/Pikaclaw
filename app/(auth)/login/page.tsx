@@ -20,12 +20,7 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      const base =
-        typeof window !== "undefined" &&
-        window.location.pathname.startsWith("/Pikaclaw")
-          ? "/Pikaclaw"
-          : "";
-      window.location.href = base + "/dashboard";
+      window.location.href = "/dashboard";
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);

@@ -220,7 +220,7 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const basePath = pathname?.startsWith("/Pikaclaw") ? "/Pikaclaw" : "";
+  const basePath = "";
 
   const isActive = (href: string) => {
     const fullPath = basePath + href;

@@ -29,7 +29,7 @@ export default function Topbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const basePath = pathname?.startsWith("/Pikaclaw") ? "/Pikaclaw" : "";
+  const basePath = "";
   const relativePath = basePath ? pathname?.replace(basePath, "") : pathname;
   const pageTitle =
     pageTitles[relativePath || ""] ||
@@ -152,10 +152,7 @@ export default function Topbar() {
                   <button
                     onClick={() => {
                       setDropdownOpen(false);
-                      const base = window.location.pathname.startsWith("/Pikaclaw")
-                        ? "/Pikaclaw"
-                        : "";
-                      window.location.href = base + "/settings";
+                      window.location.href = "/settings";
                     }}
                     className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-[#141420] transition-colors"
                   >
@@ -176,10 +173,7 @@ export default function Topbar() {
                   <button
                     onClick={() => {
                       setDropdownOpen(false);
-                      const base = window.location.pathname.startsWith("/Pikaclaw")
-                        ? "/Pikaclaw"
-                        : "";
-                      window.location.href = base + "/billing";
+                      window.location.href = "/billing";
                     }}
                     className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-[#141420] transition-colors"
                   >

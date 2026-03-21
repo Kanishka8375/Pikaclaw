@@ -10,10 +10,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      const base = window.location.pathname.startsWith("/Pikaclaw")
-        ? "/Pikaclaw"
-        : "";
-      window.location.href = base + "/login";
+      window.location.href = "/login";
     }
   }, [user, isLoading]);
 
