@@ -2,8 +2,17 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import emailjs from "@emailjs/browser";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+
+// ======================================================
+// EMAILJS CONFIG — Replace these with your own values
+// Sign up free at https://www.emailjs.com/
+// ======================================================
+const EMAILJS_SERVICE_ID = "YOUR_SERVICE_ID";   // e.g. "service_abc123"
+const EMAILJS_TEMPLATE_ID = "YOUR_TEMPLATE_ID"; // e.g. "template_xyz789"
+const EMAILJS_PUBLIC_KEY = "YOUR_PUBLIC_KEY";    // e.g. "user_AbCdEfG123"
 
 interface WaitlistFormProps {
   source?: string;
@@ -19,7 +28,7 @@ export default function WaitlistForm({
   const [message, setMessage] = useState("");
   const [submittedEmail, setSubmittedEmail] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email || status === "loading") return;
 
@@ -41,6 +50,23 @@ export default function WaitlistForm({
       setStatus("success");
       setMessage("You're already on the list!");
       return;
+    }
+
+    // Send confirmation email via EmailJS
+    try {
+      await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        {
+          to_email: normalizedEmail,
+          message:
+            "Thanks for joining the SYNTHOS waitlist! You're now on the list for early access. We'll notify you as soon as SYNTHOS is ready to launch. Stay tuned!",
+        },
+        EMAILJS_PUBLIC_KEY
+      );
+    } catch {
+      // Email send failed — still save to waitlist but note the issue
+      console.warn("Confirmation email could not be sent.");
     }
 
     stored.push(normalizedEmail);
@@ -148,7 +174,9 @@ export default function WaitlistForm({
               </p>
 
               <p className="text-gray-400 text-xs mb-6">
-                We&apos;ll send you an email with early access details when SYNTHOS launches. Stay tuned!
+                {message === "You're already on the list!"
+                  ? "You've already signed up with this email. No need to register again!"
+                  : "A confirmation email has been sent to your inbox. We'll notify you when SYNTHOS launches!"}
               </p>
 
               <button
