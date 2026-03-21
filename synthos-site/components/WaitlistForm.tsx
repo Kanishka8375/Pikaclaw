@@ -11,38 +11,42 @@ interface WaitlistFormProps {
 }
 
 export default function WaitlistForm({
-  source = "landing",
+  source: _source = "landing",
   className = "",
 }: WaitlistFormProps) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email || status === "loading") return;
 
-    setStatus("loading");
-    try {
-      const res = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, source }),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        setStatus("success");
-        setMessage(data.message);
-        setEmail("");
-      } else {
-        setStatus("error");
-        setMessage(data.message);
-      }
-    } catch {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
       setStatus("error");
-      setMessage("Network error. Please try again.");
+      setMessage("Please enter a valid email address.");
+      return;
     }
+
+    setStatus("loading");
+
+    // Client-side storage for static deployment
+    const stored = JSON.parse(localStorage.getItem("synthos_waitlist") || "[]");
+    const normalizedEmail = email.toLowerCase().trim();
+
+    if (stored.includes(normalizedEmail)) {
+      setStatus("success");
+      setMessage("You're already on the list!");
+      return;
+    }
+
+    stored.push(normalizedEmail);
+    localStorage.setItem("synthos_waitlist", JSON.stringify(stored));
+
+    setStatus("success");
+    setMessage("You're on the list! We'll reach out soon.");
+    setEmail("");
   }
 
   return (
