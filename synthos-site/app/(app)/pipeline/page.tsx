@@ -7,6 +7,9 @@ import GradientText from "@/components/ui/GradientText";
 import { staggerContainer, fadeInUp } from "@/lib/animations";
 import { mockEpisodes } from "@/lib/mock-data";
 import type { Episode, AgentStatus } from "@/lib/types";
+import OpenClawBadge from "@/components/app/OpenClawBadge";
+import OpenClawMetricsBar from "@/components/app/OpenClawMetricsBar";
+import { openClawAgents } from "@/lib/openclaw";
 
 const agentStatusColors: Record<AgentStatus["status"], string> = {
   waiting: "bg-[#64748B]/20 text-[#94A3B8]",
@@ -44,9 +47,12 @@ export default function PipelinePage() {
         <h1 className="text-3xl font-bold text-text-primary">
           Episode <GradientText>Pipeline</GradientText>
         </h1>
-        <p className="mt-1 text-text-secondary">
-          Track agent progress across your production pipeline.
-        </p>
+        <div className="flex items-center gap-2 mt-1">
+          <p className="text-text-secondary">
+            Track agent progress across your production pipeline.
+          </p>
+          <OpenClawBadge size="sm" />
+        </div>
       </motion.div>
 
       {/* Episodes List */}
@@ -186,6 +192,21 @@ export default function PipelinePage() {
                     </span>
                   </div>
                 ))}
+              </div>
+
+              {/* OpenClaw Performance */}
+              <div className="border-t border-void-border px-6 py-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+                  </svg>
+                  <span className="text-xs font-semibold text-emerald-400">OpenClaw Agent Metrics</span>
+                </div>
+                <OpenClawMetricsBar
+                  accuracy={openClawAgents.find(a => a.name === "Script Writer")?.accuracy ?? 96}
+                  consistency={openClawAgents.find(a => a.name === "Script Writer")?.consistency ?? 97}
+                  speed={openClawAgents.find(a => a.name === "Script Writer")?.speed ?? 93}
+                />
               </div>
 
               {/* Meta */}

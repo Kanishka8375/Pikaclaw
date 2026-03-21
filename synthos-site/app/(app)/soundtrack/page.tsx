@@ -7,6 +7,8 @@ import Button from "@/components/ui/Button";
 import GradientText from "@/components/ui/GradientText";
 import { staggerContainer, fadeInUp } from "@/lib/animations";
 import { mockTracks } from "@/lib/mock-data";
+import OpenClawBadge from "@/components/app/OpenClawBadge";
+import { openClawAgents } from "@/lib/openclaw";
 
 const statusColors: Record<string, string> = {
   generating: "bg-[#EC4899]/20 text-[#F472B6] border border-[#EC4899]/30 animate-pulse",
@@ -45,9 +47,12 @@ export default function SoundtrackPage() {
           <h1 className="text-3xl font-bold text-text-primary">
             Soundtrack <GradientText>Forge</GradientText>
           </h1>
-          <p className="mt-1 text-text-secondary">
-            Generate, preview, and assign AI-composed music to episodes.
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-text-secondary">
+              Generate, preview, and assign AI-composed music to episodes.
+            </p>
+            <OpenClawBadge size="sm" />
+          </div>
         </div>
         <Button size="md">
           <span className="flex items-center gap-2">
@@ -73,6 +78,26 @@ export default function SoundtrackPage() {
             <p className="mt-1 text-2xl font-bold text-text-primary">{s.value}</p>
           </Card>
         ))}
+      </motion.div>
+
+      {/* OpenClaw Music Composer */}
+      <motion.div variants={fadeInUp}>
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-emerald-400">OpenClaw Music Composer Agent</p>
+              <p className="text-[10px] text-text-muted">Autonomous score generation &middot; mood-matched &middot; scene-synced</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 text-xs">
+            <span className="text-text-muted">Accuracy <span className="text-emerald-400 font-mono font-bold">{openClawAgents.find(a => a.name === "Music Composer")?.accuracy}%</span></span>
+            <span className="text-text-muted">Consistency <span className="text-[#818CF8] font-mono font-bold">{openClawAgents.find(a => a.name === "Music Composer")?.consistency}%</span></span>
+            <span className="text-text-muted">Speed <span className="text-[#F472B6] font-mono font-bold">{openClawAgents.find(a => a.name === "Music Composer")?.speed}%</span></span>
+          </div>
+        </div>
       </motion.div>
 
       {/* Filters */}

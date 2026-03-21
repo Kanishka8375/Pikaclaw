@@ -8,6 +8,8 @@ import GradientText from "@/components/ui/GradientText";
 import { staggerContainer, fadeInUp } from "@/lib/animations";
 import { mockBibleEntries } from "@/lib/mock-data";
 import type { BibleEntry } from "@/lib/types";
+import OpenClawBadge from "@/components/app/OpenClawBadge";
+import { openClawAgents } from "@/lib/openclaw";
 
 type Category = BibleEntry["category"] | "all";
 
@@ -89,9 +91,12 @@ export default function BiblePage() {
           <h1 className="text-3xl font-bold text-text-primary">
             Production <GradientText>Bible</GradientText>
           </h1>
-          <p className="mt-1 text-text-secondary">
-            The canonical source of truth for your series.
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-text-secondary">
+              The canonical source of truth for your series.
+            </p>
+            <OpenClawBadge size="sm" />
+          </div>
         </div>
         <Button size="md">
           <span className="flex items-center gap-2">
@@ -101,6 +106,25 @@ export default function BiblePage() {
             New Entry
           </span>
         </Button>
+      </motion.div>
+
+      {/* OpenClaw Bible Keeper */}
+      <motion.div variants={fadeInUp}>
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-emerald-400">OpenClaw Bible Keeper Agent</p>
+              <p className="text-[10px] text-text-muted">Auto-generates &amp; enforces series canon &middot; cross-episode consistency</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 text-xs">
+            <span className="text-text-muted">Accuracy <span className="text-emerald-400 font-mono font-bold">{openClawAgents.find(a => a.name === "Bible Keeper")?.accuracy}%</span></span>
+            <span className="text-text-muted">Consistency <span className="text-[#818CF8] font-mono font-bold">{openClawAgents.find(a => a.name === "Bible Keeper")?.consistency}%</span></span>
+          </div>
+        </div>
       </motion.div>
 
       {/* Category Filters */}

@@ -8,6 +8,8 @@ import GradientText from "@/components/ui/GradientText";
 import { staggerContainer, fadeInUp } from "@/lib/animations";
 import { mockRenderJobs } from "@/lib/mock-data";
 import type { RenderJob } from "@/lib/types";
+import OpenClawBadge from "@/components/app/OpenClawBadge";
+import { openClawAgents } from "@/lib/openclaw";
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -183,9 +185,12 @@ export default function RenderQueuePage() {
           <h1 className="text-3xl font-bold text-text-primary">
             <GradientText>Render Queue</GradientText>
           </h1>
-          <p className="mt-1 text-text-secondary">
-            Manage and monitor all rendering jobs across your projects.
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-text-secondary">
+              Manage and monitor all rendering jobs across your projects.
+            </p>
+            <OpenClawBadge size="sm" />
+          </div>
         </div>
         <Button size="md">
           <span className="flex items-center gap-2">
@@ -259,6 +264,25 @@ export default function RenderQueuePage() {
             <span>100%</span>
           </div>
         </Card>
+      </motion.div>
+
+      {/* ---- OpenClaw Render Optimizer ---- */}
+      <motion.div variants={fadeInUp}>
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-emerald-400">OpenClaw Render Optimizer</p>
+              <p className="text-[10px] text-text-muted">Intelligent GPU routing &middot; priority scheduling &middot; cost optimization</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 text-xs">
+            <span className="text-text-muted">Accuracy <span className="text-emerald-400 font-mono font-bold">{openClawAgents.find(a => a.name === "Render Optimizer")?.accuracy}%</span></span>
+            <span className="text-text-muted">Speed <span className="text-[#F472B6] font-mono font-bold">{openClawAgents.find(a => a.name === "Render Optimizer")?.speed}%</span></span>
+          </div>
+        </div>
       </motion.div>
 
       {/* ---- Filters + Cloud/Local Toggle ---- */}

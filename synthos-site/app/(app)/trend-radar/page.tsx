@@ -7,6 +7,8 @@ import Button from "@/components/ui/Button";
 import GradientText from "@/components/ui/GradientText";
 import { staggerContainer, fadeInUp } from "@/lib/animations";
 import { mockTrends } from "@/lib/mock-data";
+import OpenClawBadge from "@/components/app/OpenClawBadge";
+import { openClawAgents } from "@/lib/openclaw";
 
 const platformColors: Record<string, string> = {
   tiktok: "bg-[#EC4899]/20 text-[#F472B6] border border-[#EC4899]/30",
@@ -43,9 +45,12 @@ export default function TrendRadarPage() {
           <h1 className="text-3xl font-bold text-text-primary">
             Trend <GradientText>Radar</GradientText>
           </h1>
-          <p className="mt-1 text-text-secondary">
-            Track viral trends across platforms and generate matching content.
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-text-secondary">
+              Track viral trends across platforms and generate matching content.
+            </p>
+            <OpenClawBadge size="sm" />
+          </div>
         </div>
         <Button variant="secondary" size="md">
           <span className="flex items-center gap-2">
@@ -55,6 +60,25 @@ export default function TrendRadarPage() {
             Refresh Data
           </span>
         </Button>
+      </motion.div>
+
+      {/* OpenClaw Trend Analyzer */}
+      <motion.div variants={fadeInUp}>
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-emerald-400">OpenClaw Trend Analyzer</p>
+              <p className="text-[10px] text-text-muted">24/7 monitoring across TikTok, YouTube, Douyin &amp; Instagram</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 text-xs">
+            <span className="text-text-muted">Accuracy <span className="text-emerald-400 font-mono font-bold">{openClawAgents.find(a => a.name === "Trend Analyzer")?.accuracy}%</span></span>
+            <span className="text-text-muted">Speed <span className="text-[#F472B6] font-mono font-bold">{openClawAgents.find(a => a.name === "Trend Analyzer")?.speed}%</span></span>
+          </div>
+        </div>
       </motion.div>
 
       {/* Platform Filters */}

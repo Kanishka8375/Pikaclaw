@@ -6,6 +6,8 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import GradientText from "@/components/ui/GradientText";
 import { staggerContainer, fadeInUp } from "@/lib/animations";
+import OpenClawBadge from "@/components/app/OpenClawBadge";
+import { openClawAgents } from "@/lib/openclaw";
 
 interface Plan {
   name: string;
@@ -111,9 +113,12 @@ export default function BillingPage() {
         <h1 className="text-3xl font-bold text-text-primary">
           <GradientText>Billing</GradientText>
         </h1>
-        <p className="mt-1 text-text-secondary">
-          Manage your subscription and view invoices.
-        </p>
+        <div className="flex items-center gap-2 mt-1">
+          <p className="text-text-secondary">
+            Manage your subscription and view invoices.
+          </p>
+          <OpenClawBadge size="sm" />
+        </div>
       </motion.div>
 
       {/* Current Plan Summary */}
@@ -241,6 +246,38 @@ export default function BillingPage() {
             </div>
           </Card>
         ))}
+      </motion.div>
+
+      {/* OpenClaw Usage */}
+      <motion.div variants={fadeInUp}>
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+              </svg>
+              <div>
+                <p className="text-sm font-medium text-emerald-400">OpenClaw Agent Usage</p>
+                <p className="text-[10px] text-text-muted">Included with your plan &middot; {openClawAgents.filter(a => a.status === "active" || a.status === "processing").length} agents active</p>
+              </div>
+            </div>
+            <span className="text-xs text-emerald-400 font-medium bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2.5 py-0.5">Included</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { label: "Agent Tasks", value: "2,847", sub: "this month" },
+              { label: "Accuracy", value: "97.2%", sub: "avg across agents" },
+              { label: "Uptime", value: "99.9%", sub: "last 30 days" },
+              { label: "Cost Savings", value: "$340", sub: "vs manual workflows" },
+            ].map((stat) => (
+              <div key={stat.label} className="p-3 rounded-xl bg-void/50 border border-void-border">
+                <p className="text-[10px] text-text-muted uppercase tracking-wider">{stat.label}</p>
+                <p className="text-lg font-bold text-text-primary mt-1">{stat.value}</p>
+                <p className="text-[10px] text-text-muted mt-0.5">{stat.sub}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </motion.div>
 
       {/* Invoices */}

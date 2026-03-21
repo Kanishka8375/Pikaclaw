@@ -8,6 +8,8 @@ import GradientText from "@/components/ui/GradientText";
 import { staggerContainer, fadeInUp } from "@/lib/animations";
 import { mockCharacters } from "@/lib/mock-data";
 import type { Character } from "@/lib/types";
+import OpenClawBadge from "@/components/app/OpenClawBadge";
+import { openClawAgents } from "@/lib/openclaw";
 
 const roleColors: Record<Character["role"], string> = {
   protagonist: "bg-[#4F46E5]/20 text-[#818CF8] border border-[#4F46E5]/30",
@@ -35,9 +37,12 @@ export default function CharactersPage() {
           <h1 className="text-3xl font-bold text-text-primary">
             Character <GradientText>DNA Vault</GradientText>
           </h1>
-          <p className="mt-1 text-text-secondary">
-            Manage persistent character identities across episodes.
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-text-secondary">
+              Manage persistent character identities across episodes.
+            </p>
+            <OpenClawBadge size="sm" />
+          </div>
         </div>
         <Button size="md">
           <span className="flex items-center gap-2">
@@ -112,6 +117,19 @@ export default function CharactersPage() {
               <div className="mt-4 flex items-center gap-4 text-xs text-text-muted">
                 <span>{char.voiceType}</span>
                 <span>{char.memoryEntries} memories</span>
+              </div>
+
+              {/* OpenClaw consistency */}
+              <div className="mt-3 pt-3 border-t border-void-border flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+                  </svg>
+                  <span className="text-[10px] text-emerald-400 font-medium">OpenClaw DNA Lock</span>
+                </div>
+                <div className="flex items-center gap-3 text-[10px]">
+                  <span className="text-text-muted">Consistency <span className="text-emerald-400 font-mono">{openClawAgents[0].consistency}%</span></span>
+                </div>
               </div>
 
               {/* Expand Button */}

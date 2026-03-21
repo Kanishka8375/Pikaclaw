@@ -51,9 +51,12 @@ export default function ProjectsPage() {
           <h1 className="text-3xl font-bold text-text-primary">
             <GradientText>Projects</GradientText>
           </h1>
-          <p className="mt-1 text-text-secondary">
-            Manage your animation series and productions.
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-text-secondary">
+              Manage your animation series and productions.
+            </p>
+            <OpenClawBadge size="sm" />
+          </div>
         </div>
         <Button size="md">
           <span className="flex items-center gap-2">
@@ -157,6 +160,15 @@ export default function ProjectsPage() {
                   <span>{project.style}</span>
                   <span>{project.episodes} ep{project.episodes !== 1 ? "s" : ""}</span>
                 </div>
+
+                {/* OpenClaw automation status */}
+                {project.status === "in_progress" && (
+                  <div className="mt-3 pt-3 border-t border-void-border flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[10px] text-emerald-400 font-medium">OpenClaw automating</span>
+                    <span className="text-[10px] text-text-muted ml-auto">{openClawAgents.filter(a => a.status === "active").length} agents active</span>
+                  </div>
+                )}
               </Card>
             ))}
           </motion.div>
