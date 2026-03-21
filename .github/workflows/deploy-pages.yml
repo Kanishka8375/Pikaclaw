@@ -2,7 +2,7 @@ name: Deploy SYNTHOS to GitHub Pages
 
 on:
   push:
-    branches: ["claude/synthos-saas-plan-4d42w", "main"]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
