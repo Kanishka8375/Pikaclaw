@@ -7,6 +7,8 @@ import Button from "@/components/ui/Button";
 import GradientText from "@/components/ui/GradientText";
 import { staggerContainer, fadeInUp } from "@/lib/animations";
 import { mockProjects } from "@/lib/mock-data";
+import OpenClawBadge from "@/components/app/OpenClawBadge";
+import { openClawAgents } from "@/lib/openclaw";
 
 const statusColors: Record<string, string> = {
   draft: "bg-[#64748B]/20 text-[#94A3B8] border border-[#64748B]/30",
